@@ -18,16 +18,17 @@ public class SayHelloImpl implements SayHello {
 		Logger.debug("Hello");
 	}
 
+	@SuppressWarnings("unused")
 	@Override
-	@Timed
 	@Counted
+	@Timed
 	public void Error() {
 		try {
 			Thread.sleep(750);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		double x = 2 / 0;
+		Logger.error("The above line should have caused an exception");
 	}
 }

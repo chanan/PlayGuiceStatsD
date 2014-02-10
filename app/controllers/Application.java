@@ -16,7 +16,11 @@ public class Application extends Controller {
 	
     public Result index() {
     	sayHello.Speak();
-    	sayHello.Error();
         return ok(index.render("Your new application is ready."));
+    }
+    
+    public Result causeError() {
+    	sayHello.Error();
+    	return ok("An error should have occured. This won't print");
     }
 }

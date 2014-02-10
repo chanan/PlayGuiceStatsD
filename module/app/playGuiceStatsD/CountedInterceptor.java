@@ -11,6 +11,14 @@ class CountedInterceptor extends AbstractInterceptor implements MethodIntercepto
 		final String combined = getCombinedPrefix() + ".count";
 		Statsd.increment(statName);
 		Statsd.increment(combined);
-		return invocation.proceed();
+	
+		Object ret = null;
+		try {
+			ret = invocation.proceed();
+		} catch (Exception e) {
+			Statsd.increment(combined + ".error");
+			throw e;
+		}
+		return ret;
 	}
 }
