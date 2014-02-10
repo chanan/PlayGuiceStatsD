@@ -4,11 +4,11 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import play.modules.statsd.Statsd;
 
-class CountedInterceptor implements MethodInterceptor {
+class CountedInterceptor extends AbstractInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		final String statName = invocation.getMethod().getDeclaringClass().getName() + "." + invocation.getMethod().getName();
-		final String combined = "classes.combined.time";
+		final String combined = getCombinedPrefix() + ".count";
 		Statsd.increment(statName);
 		Statsd.increment(combined);
 		return invocation.proceed();

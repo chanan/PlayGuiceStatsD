@@ -16,6 +16,7 @@ public class Application extends Controller {
 	
     public Result index() {
     	sayHello.Speak();
+    	sayHello.Error();
         return ok(index.render("Your new application is ready."));
     }
 }
