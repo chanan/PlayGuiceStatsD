@@ -1,7 +1,3 @@
-@(message: String)
-
-@main("PlayGuiceStatsD") {
-
 <h1>PlayGuiceStatsD</h1>
 
 <h2>Overview</h2>
@@ -17,15 +13,15 @@ registered in Guice.</p>
 
 <p>Add the following to your build.sbt:</p>
 
-<p><code><pre>
+<p><code>java
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
-</pre></code></p>
+</code></p>
 
 <p>Add to your libraryDependencies:
-<code><pre>
+<code>java
 "playguicestatsd" %% "playguicestatsd" % "0.1.0-SNAPSHOT"
-</pre></code></p>
+</code></p>
 
 <h2>Usage</h2>
 
@@ -34,49 +30,47 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 <p>Create a Guice Injector in Global using PlayGuiceStatsD (Note: AkkaGuice is not 
 required for usage):</p>
 
-<p>
-<code><pre>
+<p>```java
 import play.Application;
 import play.GlobalSettings;
 import play.api.mvc.EssentialFilter;
 import playGuiceStatsD.PlayGuiceStatsD;
-import akkaGuice.AkkaGuice;
+import akkaGuice.AkkaGuice;</p>
 
-import com.google.inject.Injector;
+<p>import com.google.inject.Injector;</p>
 
-public class Global extends GlobalSettings {
-	private Injector injector = PlayGuiceStatsD.CreateInjector();
+<p>public class Global extends GlobalSettings {
+    private Injector injector = PlayGuiceStatsD.CreateInjector();</p>
 
-	@@SuppressWarnings("unchecked")
-	@@Override
-	public <T extends EssentialFilter> Class<T>[] filters() {
-    	return new Class[] {play.modules.statsd.StatsdFilter.class};
-	}
-
-	@@Override
-	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
-    	return injector.getInstance(clazz);
-	}
-
-	@@Override
-	public void onStart(Application arg0) {
-    	injector = injector.createChildInjector(new GuiceModule());
-    	injector = AkkaGuice.Startup(injector, "services");
-	}
+<pre><code>@SuppressWarnings("unchecked")
+@Override
+public &lt;T extends EssentialFilter&gt; Class&lt;T&gt;[] filters() {
+    return new Class[] {play.modules.statsd.StatsdFilter.class};
 }
-</pre></code>
+
+@Override
+public &lt;A&gt; A getControllerInstance(Class&lt;A&gt; clazz) throws Exception {
+    return injector.getInstance(clazz);
+}
+
+@Override
+public void onStart(Application arg0) {
+    injector = injector.createChildInjector(new GuiceModule());
+    injector = AkkaGuice.Startup(injector, "services");
+}   
+</code></pre>
+
+<p>}
+```</p>
 
 <h3>Annotations</h3>
 
 <p>Annotations can be placed at the class or method level:</p>
 
-<p><code><pre>
-@@Timed
-@@Counted
+<p><code>java
+@Timed
+@Counted
 public class SayHelloImpl implements SayHello {
     ...
 }
-</pre></code></p>
-
-
-}
+</code></p>
