@@ -10,5 +10,7 @@ class GuiceModule extends AbstractModule {
 	protected void configure() {
 		bindInterceptor(Matchers.any(), Matchers.annotatedWith(Counted.class), new CountedInterceptor());
 		bindInterceptor(Matchers.any(), Matchers.annotatedWith(Timed.class), new TimedInterceptor());
+		bindInterceptor(Matchers.annotatedWith(Counted.class), Matchers.any(), new CountedInterceptor());
+		bindInterceptor(Matchers.annotatedWith(Timed.class), Matchers.any(), new TimedInterceptor());
 	}
 }

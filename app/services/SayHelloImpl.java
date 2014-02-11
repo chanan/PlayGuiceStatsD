@@ -4,11 +4,11 @@ import play.Logger;
 import playGuiceStatsD.annotations.Counted;
 import playGuiceStatsD.annotations.Timed;
 
+@Timed
+@Counted
 public class SayHelloImpl implements SayHello {
 	
 	@Override
-	@Timed
-	@Counted
 	public void Speak() {
 		try {
 			Thread.sleep(1000);
@@ -20,8 +20,6 @@ public class SayHelloImpl implements SayHello {
 
 	@SuppressWarnings("unused")
 	@Override
-	@Counted
-	@Timed
 	public void Error() {
 		try {
 			Thread.sleep(750);

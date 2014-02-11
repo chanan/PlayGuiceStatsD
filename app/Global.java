@@ -2,6 +2,7 @@ import play.Application;
 import play.GlobalSettings;
 import play.api.mvc.EssentialFilter;
 import playGuiceStatsD.PlayGuiceStatsD;
+import akkaGuice.AkkaGuice;
 
 import com.google.inject.Injector;
 
@@ -22,5 +23,6 @@ public class Global extends GlobalSettings {
 	@Override
 	public void onStart(Application arg0) {
 		injector = injector.createChildInjector(new GuiceModule());
+		injector = AkkaGuice.Startup(injector, "services");
 	}	
 }
