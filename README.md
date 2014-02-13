@@ -22,7 +22,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 
 Add to your libraryDependencies:
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.1.0-SNAPSHOT"
+"playguicestatsd" %% "playguicestatsd" % "0.1.0"
 ```
 
 Usage
@@ -34,16 +34,8 @@ Create a Guice Injector in Global using PlayGuiceStatsD (Note: AkkaGuice is not
 required for usage):
 
 ```java
-import play.Application;
-import play.GlobalSettings;
-import play.api.mvc.EssentialFilter;
-import playGuiceStatsD.PlayGuiceStatsD;
-import akkaGuice.AkkaGuice;
-
-import com.google.inject.Injector;
-
 public class Global extends GlobalSettings {
-	private Injector injector = PlayGuiceStatsD.CreateInjector();
+	private final Injector injector = Guice.createInjector(new PlayGuiceStatsDModule(), new GuiceModule());
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -55,12 +47,6 @@ public class Global extends GlobalSettings {
 	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
 		return injector.getInstance(clazz);
 	}
-
-	@Override
-	public void onStart(Application arg0) {
-		injector = injector.createChildInjector(new GuiceModule());
-		injector = AkkaGuice.Startup(injector, "services");
-	}	
 }
 ```
 
@@ -73,6 +59,32 @@ Annotations can be placed at the class or method level:
 @Counted
 public class SayHelloImpl implements SayHello {
     ...
+}
+```
+
+### Integrations with AkkaGuice
+
+AkkaGuice can be used saftly with PlayGuiceStatsD:
+
+```java
+public class Global extends GlobalSettings {
+	private final Injector injector = Guice.createInjector(new AkkaGuiceModule("services"), new PlayGuiceStatsDModule(), new GuiceModule());
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends EssentialFilter> Class<T>[] filters() {
+		return new Class[] {play.modules.statsd.StatsdFilter.class};
+	}
+
+	@Override
+	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
+		return injector.getInstance(clazz);
+	}
+	
+	@Override
+	public void onStart(Application arg0) {
+		AkkaGuice.InitializeInjector(injector, "services");
+	}
 }
 ```
 

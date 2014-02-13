@@ -24,7 +24,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 
 <p>Add to your libraryDependencies:
 <code><pre>
-"playguicestatsd" %% "playguicestatsd" % "0.1.0-SNAPSHOT"
+"playguicestatsd" %% "playguicestatsd" % "0.1.0"
 </pre></code></p>
 
 <h2>Usage</h2>
@@ -36,16 +36,8 @@ required for usage):</p>
 
 <p>
 <code><pre>
-import play.Application;
-import play.GlobalSettings;
-import play.api.mvc.EssentialFilter;
-import playGuiceStatsD.PlayGuiceStatsD;
-import akkaGuice.AkkaGuice;
-
-import com.google.inject.Injector;
-
 public class Global extends GlobalSettings {
-	private Injector injector = PlayGuiceStatsD.CreateInjector();
+	private final Injector injector = Guice.createInjector(new PlayGuiceStatsDModule(), new GuiceModule());
 
 	@@SuppressWarnings("unchecked")
 	@@Override
@@ -57,14 +49,8 @@ public class Global extends GlobalSettings {
 	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
     	return injector.getInstance(clazz);
 	}
-
-	@@Override
-	public void onStart(Application arg0) {
-    	injector = injector.createChildInjector(new GuiceModule());
-    	injector = AkkaGuice.Startup(injector, "services");
-	}
 }
-</pre></code>
+</pre></code></p>
 
 <h3>Annotations</h3>
 
@@ -78,5 +64,31 @@ public class SayHelloImpl implements SayHello {
 }
 </pre></code></p>
 
+<h3>Integrations with AkkaGuice</h3>
+
+<p>AkkaGuice can be used saftly with PlayGuiceStatsD:</p>
+
+<p>
+<code><pre>
+public class Global extends GlobalSettings {
+	private final Injector injector = Guice.createInjector(new PlayGuiceStatsDModule(), new GuiceModule());
+
+	@@SuppressWarnings("unchecked")
+	@@Override
+	public <T extends EssentialFilter> Class<T>[] filters() {
+    	return new Class[] {play.modules.statsd.StatsdFilter.class};
+	}
+
+	@@Override
+	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
+    	return injector.getInstance(clazz);
+	}
+	
+	@@Override
+	public void onStart(Application arg0) {
+		AkkaGuice.InitializeInjector(injector, "services");
+	}
+}
+</pre></code></p>
 
 }
