@@ -1,11 +1,7 @@
 package services;
 
 import play.Logger;
-import playGuiceStatsD.annotations.Counted;
-import playGuiceStatsD.annotations.Timed;
 
-@Timed
-@Counted
 public class SayHelloImpl implements SayHello {
 	
 	@Override

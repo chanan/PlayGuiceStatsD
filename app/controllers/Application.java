@@ -1,4 +1,5 @@
 package controllers;
+import play.Logger;
 import play.mvc.Controller;
 import play.mvc.Result;
 import services.SayHello;
@@ -16,6 +17,7 @@ public class Application extends Controller {
 	public Application(SayHello sayHello, @Named("HelloActor") ActorRef actor) {
 		this.sayHello = sayHello;
 		this.actor = actor;
+		Logger.debug("SayHello from Controller: " + sayHello.toString());
 	}
 	
     public Result index() {

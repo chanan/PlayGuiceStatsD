@@ -1,7 +1,9 @@
 package services;
+import play.Logger;
 import akka.actor.UntypedActor;
 
 import com.google.inject.Inject;
+
 import akkaGuice.annotations.RegisterActor;
 
 @RegisterActor
@@ -11,10 +13,12 @@ public class HelloActor extends UntypedActor {
 	@Inject
 	public HelloActor(SayHello sayHello) {
 		this.sayHello = sayHello;
+		Logger.debug(sayHello.toString());
 	}
 
 	@Override
 	public void onReceive(Object arg0) throws Exception {
+		Logger.debug("Hello from Actor");
 		sayHello.Speak();
 	}
 }

@@ -4,26 +4,32 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import play.modules.statsd.Statsd;
 
-class TimedInterceptor extends AbstractInterceptor implements MethodInterceptor {
+class CountedAndTimedInterceptor extends AbstractInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		final String statName = invocation.getMethod().getDeclaringClass().getName() + "." + invocation.getMethod().getName();
-		final String combined = getCombinedPrefix() + ".time";
+		final String combinedCount = getCombinedPrefix() + ".count";
+		final String combinedTime = getCombinedPrefix() + ".time";
 		
+		Statsd.increment(statName);
+		Statsd.increment(combinedCount);
+	
 		final long start = System.currentTimeMillis();
-		
-		Object ret = null;
 		boolean error = false;
+		Object ret = null;
 		try {
-			invocation.proceed();
+			ret = invocation.proceed();
 		} catch (Exception e) {
 			error = true;
 			throw e;
 		} finally {
 			final long time = System.currentTimeMillis() - start;
 			Statsd.timing(statName, time);
-			Statsd.timing(combined, time);
-			if(error) Statsd.timing(combined + ".error", time);
+			Statsd.timing(combinedTime, time);
+			if(error) {
+				Statsd.timing(combinedTime + ".error", time);
+				Statsd.increment(combinedCount + ".error");
+			}
 		}
 		return ret;
 	}
