@@ -22,7 +22,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 
 Add to your libraryDependencies:
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.1.0"
+"playguicestatsd" %% "playguicestatsd" % "0.2.0"
 ```
 
 Usage
@@ -47,18 +47,6 @@ public class Global extends GlobalSettings {
 	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
 		return injector.getInstance(clazz);
 	}
-}
-```
-
-### Annotations
-
-Annotations can be placed at the class or method level:
-
-```java
-@Timed
-@Counted
-public class SayHelloImpl implements SayHello {
-    ...
 }
 ```
 
