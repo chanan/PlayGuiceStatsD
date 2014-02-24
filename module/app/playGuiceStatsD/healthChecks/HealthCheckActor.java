@@ -4,9 +4,11 @@ import java.util.Set;
 
 import play.Logger;
 import playGuiceStatsD.healthChecks.HealthCheck.Result;
+import akka.actor.ActorRef;
+import akka.actor.Props;
 import akka.actor.UntypedActor;
 
-public class HealthCheckActor extends UntypedActor {
+class HealthCheckActor extends UntypedActor {
 	private final Set<Class<? extends HealthCheck>> checks;
 	
 	public HealthCheckActor(Set<Class<? extends HealthCheck>> checks) {
@@ -16,21 +18,28 @@ public class HealthCheckActor extends UntypedActor {
 	@Override
 	public void onReceive(Object msg) throws Exception {
 		if(msg instanceof String) {
-			String message = (String)msg;
-			if(message.equalsIgnoreCase("check")) {
-				for(Class<? extends HealthCheck> check : checks) {
-					HealthCheck healthCheck = check.newInstance();
-					getSender().tell(healthCheck.execute().toString(), getSelf());
-				}
-			} else if(message.equalsIgnoreCase("tick")) {
-				Logger.debug("Checking health...");
-				for(Class<? extends HealthCheck> check : checks) {
-					HealthCheck healthCheck = check.newInstance();
-					Result result = healthCheck.execute();
-					if(result.isHealthy()) Logger.debug(result.toString());
-					else Logger.error(result.toString());
-				}
+			for(Class<? extends HealthCheck> check : checks) {
+				Props props = Props.create(Worker.class, check);
+				ActorRef worker = getContext().actorOf(props);
+				worker.tell("work", getSelf());
 			}
 		}
 	}
+	
+	static class Worker extends UntypedActor {
+		private final Class<? extends HealthCheck> healthCheckClass;
+		
+		public Worker(Class<? extends HealthCheck> healthCheckClass) {
+			this.healthCheckClass = healthCheckClass;
+		}
+		
+        @Override
+        public void onReceive(Object message) throws Exception {
+        	HealthCheck healthCheck = healthCheckClass.newInstance();
+			Result result = healthCheck.execute();
+			if(result.isHealthy()) Logger.info(result.toString());
+			else Logger.error(result.toString());
+			getContext().stop(getSelf());
+        }
+	} 
 }

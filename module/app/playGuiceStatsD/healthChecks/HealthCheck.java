@@ -1,6 +1,7 @@
 package playGuiceStatsD.healthChecks;
 
 import play.Logger;
+import play.modules.statsd.Statsd;
 
 /**
  * A health check for a component of your application.
@@ -193,13 +194,27 @@ public abstract class HealthCheck {
      *         Result} with a descriptive error message or exception
      */
     public Result execute() {
-    	String name = this.getClass().getName();
+    	final String name = this.getClass().getName();
+    	final String statName = "healthchecks." + name;
+    	Result check = null;
+    	boolean error = false;
+    	final long start = System.currentTimeMillis();
         try {
-            Result check = check();
-            return Result.setName(check, name);
+            check = check();
+            error = check.isHealthy();
         } catch (Exception e) {
-        	Result check = Result.unhealthy(e);
-        	return Result.setName(check, name);
+        	check = Result.unhealthy(e);
+        	error = true;
         }
+        final long time = System.currentTimeMillis() - start;
+    	Result.setName(check, name);
+    	Statsd.timing(statName, time);
+    	Statsd.increment(statName);
+		if(error) {
+			Logger.debug("error");
+			Statsd.timing("healthchecks.errors", time);
+			Statsd.increment("healthchecks.errors");
+		}
+        return check;
     }
 }

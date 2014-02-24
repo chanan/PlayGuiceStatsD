@@ -17,6 +17,12 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
 public class PlayGuiceStatsDModule extends AbstractModule {
+	private final String[] namespaces;
+	
+	public PlayGuiceStatsDModule(String... namespaces) {
+		super();
+		this.namespaces = namespaces;
+	}
 	@Override
 	protected void configure() {
 		Logger.debug("Play Guice StatsD Startup...");
@@ -26,11 +32,18 @@ public class PlayGuiceStatsDModule extends AbstractModule {
 
 	private void registerHealthChecks(Binder binder) {
 		Logger.debug("registerHealthChecks");
-		final Reflections reflections = new Reflections(new ConfigurationBuilder()
-			.setUrls(ClasspathHelper.forPackage("healthChecks"))
-			.setScanners(new SubTypesScanner()));
+		final ConfigurationBuilder configBuilder = build(namespaces);
+		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
 		Set<Class<? extends HealthCheck>> checks = reflections.getSubTypesOf(HealthCheck.class);
-		Logger.debug("HealthChecks: " + checks);
+		Logger.debug("Registered HealthChecks: " + checks);
 		binder.bind(ActorRef.class).annotatedWith(Names.named("PlayGuiceStatsD-HealthCheckActor")).toProvider(new ActorRefProvider(checks)).in(Singleton.class);
+	}
+	
+	private static ConfigurationBuilder build(String... namespaces) {
+		final ConfigurationBuilder configBuilder = new ConfigurationBuilder();
+		for(final String namespace : namespaces) {
+			configBuilder.addUrls(ClasspathHelper.forPackage(namespace));
+		}
+		return configBuilder;
 	}
 }
