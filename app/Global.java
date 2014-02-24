@@ -1,10 +1,10 @@
 import play.Application;
 import play.GlobalSettings;
-import play.Logger;
 import play.api.mvc.EssentialFilter;
 import playGuiceStatsD.PlayGuiceStatsDModule;
-import akkaGuice.AkkaGuiceModule;
+import playGuiceStatsD.healthChecks.HealthCheckScanner;
 import akkaGuice.AkkaGuice;
+import akkaGuice.AkkaGuiceModule;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -26,5 +26,6 @@ public class Global extends GlobalSettings {
 	@Override
 	public void onStart(Application arg0) {
 		AkkaGuice.InitializeInjector(injector, "services");
+		HealthCheckScanner.Start(injector);
 	}	
 }
