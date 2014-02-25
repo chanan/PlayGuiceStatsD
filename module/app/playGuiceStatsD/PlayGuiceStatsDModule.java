@@ -35,7 +35,10 @@ public class PlayGuiceStatsDModule extends AbstractModule {
 		final ConfigurationBuilder configBuilder = build(namespaces);
 		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
 		Set<Class<? extends HealthCheck>> checks = reflections.getSubTypesOf(HealthCheck.class);
-		Logger.debug("Registered HealthChecks: " + checks);
+		for(Class<? extends HealthCheck> check : checks) {
+			Logger.debug("Heathcheck bound: " + check.getName());
+			binder.bind(HealthCheck.class).annotatedWith(Names.named("PlayGuiceStatsD-HealthCheck-" + check.getName())).to(check);
+		}
 		binder.bind(ActorRef.class).annotatedWith(Names.named("PlayGuiceStatsD-HealthCheckActor")).toProvider(new ActorRefProvider(checks)).in(Singleton.class);
 	}
 	

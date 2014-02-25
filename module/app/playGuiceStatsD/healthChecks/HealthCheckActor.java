@@ -2,6 +2,9 @@ package playGuiceStatsD.healthChecks;
 
 import java.util.Set;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+
 import play.Logger;
 import playGuiceStatsD.healthChecks.HealthCheck.Result;
 import akka.actor.ActorRef;
@@ -35,7 +38,7 @@ class HealthCheckActor extends UntypedActor {
 		
         @Override
         public void onReceive(Object message) throws Exception {
-        	HealthCheck healthCheck = healthCheckClass.newInstance();
+        	HealthCheck healthCheck = HealthChecker.Injector.getInstance(Key.get(HealthCheck.class, Names.named("PlayGuiceStatsD-HealthCheck-" + healthCheckClass.getName())));
 			Result result = healthCheck.execute();
 			if(result.isHealthy()) Logger.info(result.toString());
 			else Logger.error(result.toString());

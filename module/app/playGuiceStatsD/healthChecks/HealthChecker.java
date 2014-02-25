@@ -1,9 +1,7 @@
 package playGuiceStatsD.healthChecks;
-
 import java.util.concurrent.TimeUnit;
 
 import play.Configuration;
-import play.Logger;
 import play.Play;
 import play.libs.Akka;
 import scala.concurrent.duration.Duration;
@@ -13,20 +11,17 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 
-/**
- * 
- * statsd.healthchecks.initialDelay = 1 second
- * statsd.healthchecks.interval = 2 second
- * statsd.healthchecks.enabled = false
- *
- */
 public class HealthChecker {
 	private HealthChecker() { }
 	private final static Configuration config = Play.application().configuration();
 	
+	static Injector Injector;
+	
 	public static void Start(Injector injector) {
 		if(!config.getBoolean("statsd.enabled")) return;
 		if(!config.getBoolean("statsd.healthchecks.enabled")) return;
+		
+		Injector = injector;
 		
 		long initialDelay = 1;
 		long interval = 5;
@@ -41,16 +36,14 @@ public class HealthChecker {
 			timeUnitInterval = getTimeUnit(config.getString("statsd.healthchecks.interval"));
 		}
 		
-		if(config.getBoolean("statsd.enabled")) {
-			ActorRef healthCheckActor = injector.getInstance(Key.get(ActorRef.class, Names.named("PlayGuiceStatsD-HealthCheckActor")));
-			Akka.system().scheduler().schedule(
-				Duration.apply(initialDelay, timeUnitInitial),
-				Duration.apply(interval, timeUnitInterval),
-				healthCheckActor,
-				"tick",
-				Akka.system().dispatcher(),
-				null);
-		}
+		ActorRef healthCheckActor = injector.getInstance(Key.get(ActorRef.class, Names.named("PlayGuiceStatsD-HealthCheckActor")));
+		Akka.system().scheduler().schedule(
+			Duration.apply(initialDelay, timeUnitInitial),
+			Duration.apply(interval, timeUnitInterval),
+			healthCheckActor,
+			"tick",
+			Akka.system().dispatcher(),
+			null);
 	}
 	
 	private static TimeUnit getTimeUnit(String duration) {

@@ -1,6 +1,5 @@
 package playGuiceStatsD.healthChecks;
 
-import play.Logger;
 import play.modules.statsd.Statsd;
 
 /**
@@ -194,7 +193,7 @@ public abstract class HealthCheck {
      *         Result} with a descriptive error message or exception
      */
     public Result execute() {
-    	final String name = this.getClass().getName();
+    	final String name = getClassName(this.getClass().getName());
     	final String statName = "healthchecks." + name;
     	Result check = null;
     	boolean error = false;
@@ -207,14 +206,21 @@ public abstract class HealthCheck {
         	error = true;
         }
         final long time = System.currentTimeMillis() - start;
-    	Result.setName(check, name);
+    	check = Result.setName(check, name);
     	Statsd.timing(statName, time);
     	Statsd.increment(statName);
 		if(error) {
-			Logger.debug("error");
 			Statsd.timing("healthchecks.errors", time);
 			Statsd.increment("healthchecks.errors");
 		}
         return check;
+    }
+
+    private String getClassName(String name) {
+    	String output = name;
+    	if(output.contains("$$")) {
+    		output = output.substring(0, output.indexOf("$$"));
+    	}
+		return output;
     }
 }
