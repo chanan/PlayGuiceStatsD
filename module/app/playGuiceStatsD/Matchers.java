@@ -26,6 +26,7 @@ class Matchers {
 	    	if(o instanceof Class) {
 				Class<?> clazz = (Class<?>) o;
 				if(clazz.getSuperclass().getSimpleName().equalsIgnoreCase("UntypedActor")) return false;
+				if(clazz.getSuperclass().getSimpleName().equalsIgnoreCase("HealthCheck")) return false;
 				return true;
 			}
 			return false;

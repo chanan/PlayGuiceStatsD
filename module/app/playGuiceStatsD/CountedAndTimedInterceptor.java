@@ -7,6 +7,8 @@ import play.modules.statsd.Statsd;
 class CountedAndTimedInterceptor extends AbstractInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
+		if(!isEnabled()) return invocation.proceed();
+		
 		final String statName = invocation.getMethod().getDeclaringClass().getName() + "." + invocation.getMethod().getName();
 		final String combinedCount = getCombinedPrefix() + ".count";
 		final String combinedTime = getCombinedPrefix() + ".time";

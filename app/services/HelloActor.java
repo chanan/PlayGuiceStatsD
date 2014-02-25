@@ -4,9 +4,6 @@ import akka.actor.UntypedActor;
 
 import com.google.inject.Inject;
 
-import akkaGuice.annotations.RegisterActor;
-
-@RegisterActor
 public class HelloActor extends UntypedActor {
 	private final SayHello sayHello;
 	

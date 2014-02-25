@@ -1,16 +1,16 @@
 import play.Application;
 import play.GlobalSettings;
-import play.Logger;
 import play.api.mvc.EssentialFilter;
 import playGuiceStatsD.PlayGuiceStatsDModule;
-import akkaGuice.AkkaGuiceModule;
+import playGuiceStatsD.healthChecks.HealthChecker;
 import akkaGuice.AkkaGuice;
+import akkaGuice.AkkaGuiceModule;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class Global extends GlobalSettings {
-	private final Injector injector = Guice.createInjector(new PlayGuiceStatsDModule(), new AkkaGuiceModule("services"), new GuiceModule());
+	private final Injector injector = Guice.createInjector(new PlayGuiceStatsDModule("healthchecks"), new AkkaGuiceModule("services"), new GuiceModule());
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -26,5 +26,6 @@ public class Global extends GlobalSettings {
 	@Override
 	public void onStart(Application arg0) {
 		AkkaGuice.InitializeInjector(injector, "services");
+		HealthChecker.Start(injector);
 	}	
 }
