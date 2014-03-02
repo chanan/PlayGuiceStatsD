@@ -1,6 +1,6 @@
 package playGuiceStatsD.healthChecks;
 
-import play.modules.statsd.Statsd;
+import playGuiceStatsD.Statsd;
 
 /**
  * A health check for a component of your application.
