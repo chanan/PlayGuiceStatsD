@@ -17,6 +17,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 ```
 
 Add to your libraryDependencies:
+
 ```java
 "playguicestatsd" %% "playguicestatsd" % "0.4.0"
 ```
