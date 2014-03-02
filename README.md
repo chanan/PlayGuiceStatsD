@@ -18,7 +18,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 
 Add to your libraryDependencies:
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.3.0"
+"playguicestatsd" %% "playguicestatsd" % "0.4.0"
 ```
 
 Usage
@@ -96,4 +96,9 @@ public class Global extends GlobalSettings {
 	}
 }
 ```
+
+History
+-------
+
+* 0.4.0 - Added grouping by server ip
 
