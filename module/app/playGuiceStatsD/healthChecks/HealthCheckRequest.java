@@ -1,13 +1,13 @@
 package playGuiceStatsD.healthChecks;
 
 class HealthCheckRequest {
-	private Class<? extends HealthCheck> check;
+	private HealthCheck healthCheck;
 
-	HealthCheckRequest(Class<? extends HealthCheck> check) {
-		this.check = check;
+	HealthCheckRequest(HealthCheck healthCheck) {
+		this.healthCheck = healthCheck;
 	}
 	
-	Class<? extends HealthCheck> getCheck() {
-		return check;
+	HealthCheck getCheck() {
+		return healthCheck;
 	}
 }
