@@ -15,13 +15,12 @@ public class HealthChecker {
 	private HealthChecker() { }
 	private final static Configuration config = Play.application().configuration();
 	
-	static Injector Injector;
+	private static Injector Injector;
 	
 	public static void Start(Injector injector) {
+		Injector = injector;
 		if(!config.getBoolean("statsd.enabled")) return;
 		if(!config.getBoolean("statsd.healthchecks.enabled")) return;
-		
-		Injector = injector;
 		
 		long initialDelay = 1;
 		long interval = 5;
@@ -67,5 +66,9 @@ public class HealthChecker {
 			else break;
 		}
 		return Long.parseLong(number);
+	}
+	
+	public static Injector getInjector() {
+		return Injector;
 	}
 }

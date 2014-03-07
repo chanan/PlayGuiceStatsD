@@ -1,0 +1,34 @@
+@(healthchecks: playGuiceStatsD.healthChecks.ViewModel)
+<html>
+	<head>
+		<title>Health Checks</title>
+	</head>
+	<body>
+		<h1>HealthChecks</h1>
+		<table border="1">
+			<thead>
+				<tr>
+					<th>Class</th>
+					<th>Healthy</th>
+					<th>Message</th>
+					<th>Error</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for(check <- healthchecks.getResults()) {
+					<tr>
+						<td>@check.getName()</td>
+						<td>@check.isHealthy()</td>
+						<td>@check.getMessage()</td>
+						<td>@check.getError()</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		@if(healthchecks.isHealthy()) {
+			<h3>Server status: Healthy</h3>
+		} else {
+			<h3>Server status: Sick</h3>
+		}
+	</body>
+</html>

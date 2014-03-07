@@ -14,7 +14,6 @@ public abstract class HealthCheck {
      */
     public static class Result {
         private static final Result HEALTHY = new Result(true, null, null);
-        private static final int PRIME = 31;
 
         /**
          * Returns a healthy {@link Result} with no additional message.
@@ -106,8 +105,6 @@ public abstract class HealthCheck {
             this.name = name;
         } 
         
-        
-
         /**
          * Returns {@code true} if the result indicates the component is healthy; {@code false}
          * otherwise.
@@ -136,28 +133,14 @@ public abstract class HealthCheck {
         public Throwable getError() {
             return error;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) { return true; }
-            if (o == null || getClass() != o.getClass()) { return false; }
-            final Result result = (Result) o;
-            return healthy == result.healthy &&
-                    !(error != null ? !error.equals(result.error) : result.error != null) &&
-                    !(message != null ? !message.equals(result.message) : result.message != null);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = (healthy ? 1 : 0);
-            result = PRIME * result + (message != null ? message.hashCode() : 0);
-            result = PRIME * result + (error != null ? error.hashCode() : 0);
-            return result;
+        
+        public String getName() {
+        	return name;
         }
 
         @Override
         public String toString() {
-            final StringBuilder builder = new StringBuilder("HealthCheck Result Result: {");
+            final StringBuilder builder = new StringBuilder("HealthCheck Result: {");
             if(name != null) {
             	builder.append("Name= ");
             	builder.append(name);
@@ -174,6 +157,37 @@ public abstract class HealthCheck {
             builder.append('}');
             return builder.toString();
         }
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((error == null) ? 0 : error.hashCode());
+			result = prime * result + (healthy ? 1231 : 1237);
+			result = prime * result + ((message == null) ? 0 : message.hashCode());
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			Result other = (Result) obj;
+			if (error == null) {
+				if (other.error != null) return false;
+			} else if (!error.equals(other.error)) return false;
+			if (healthy != other.healthy) return false;
+			if (message == null) {
+				if (other.message != null) return false;
+			} else if (!message.equals(other.message))
+				return false;
+			if (name == null) {
+				if (other.name != null) return false;
+			} else if (!name.equals(other.name)) return false;
+			return true;
+		}
     }
 
     /**
@@ -193,7 +207,7 @@ public abstract class HealthCheck {
      *         Result} with a descriptive error message or exception
      */
     public Result execute() {
-    	final String name = getClassName(this.getClass().getName());
+    	final String name = getClassName(this.getClass().getSimpleName());
     	final String statName = "healthchecks." + name;
     	Result check = null;
     	boolean error = false;

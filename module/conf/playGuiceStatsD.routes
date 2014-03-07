@@ -1,0 +1,1 @@
+GET		/healthcheck		@playGuiceStatsD.healthChecks.HealthCheckController.healthcheck()
