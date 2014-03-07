@@ -5,6 +5,11 @@
 	</head>
 	<body>
 		<h1>HealthChecks</h1>
+		@if(healthchecks.isHealthy()) {
+			<h2>Server status: Healthy</h2>
+		} else {
+			<h2>Server status: Sick</h2>
+		}
 		<table border="1">
 			<thead>
 				<tr>
@@ -25,10 +30,5 @@
 				}
 			</tbody>
 		</table>
-		@if(healthchecks.isHealthy()) {
-			<h3>Server status: Healthy</h3>
-		} else {
-			<h3>Server status: Sick</h3>
-		}
 	</body>
 </html>

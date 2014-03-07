@@ -1,6 +1,8 @@
 package playGuiceStatsD.healthChecks;
 
 import static akka.pattern.Patterns.ask;
+import play.Configuration;
+import play.Play;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 import play.mvc.Controller;
@@ -12,6 +14,8 @@ import com.google.inject.name.Named;
 
 public class HealthCheckController extends Controller {
 	private final ActorRef healthCheckActor;
+	private final Configuration config = Play.application().configuration();
+	private final String return500OnErrorKey = "statsd.healthchecks.500OnError";
 
 	@Inject
 	public HealthCheckController(@Named("PlayGuiceStatsD-HealthCheckActor")ActorRef healthCheckActor) {
@@ -24,8 +28,10 @@ public class HealthCheckController extends Controller {
 				public Result apply(Object response) {
 					HealthCheckResponses responses = (HealthCheckResponses) response;
 					ViewModel vm = new ViewModel(responses.getResults());
-					if(vm.isHealthy()) return ok(views.html.healthcheck.render(vm));
-					else return internalServerError(views.html.healthcheck.render(vm));
+					boolean return500OnError = true;
+					if(config.getString(return500OnErrorKey) != null) return500OnError = config.getBoolean(return500OnErrorKey);
+					if(return500OnError && !vm.isHealthy()) return internalServerError(views.html.healthcheck.render(vm));
+					else return ok(views.html.healthcheck.render(vm));
 				}
 		});
 	}
