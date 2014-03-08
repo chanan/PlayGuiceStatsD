@@ -247,6 +247,7 @@ public abstract class HealthCheck {
     	final String name = getClassName(this.getClass().getSimpleName());
     	final String statName = "healthchecks." + name + ".timeout";
     	Statsd.increment(statName);
+    	Statsd.increment("healthchecks.timeout");
     	Result check = Result.unhealthy("Timeout expired!");
     	check = Result.setName(check, name);
     	return Result.setTime(check, timeout);

@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import play.Configuration;
 import play.Logger;
+import play.Play;
 import play.libs.Akka;
 import playGuiceStatsD.healthChecks.HealthCheck.Result;
 import scala.concurrent.duration.Duration;
@@ -21,7 +23,7 @@ class HealthCheckActor extends UntypedActor {
 	private ActorRef sender;
 	private final Set<Class<? extends HealthCheck>> checks;
 	private final Map<Class<? extends HealthCheck>, HealthCheckHolder> responses = new HashMap<Class<? extends HealthCheck>, HealthCheckHolder>();
-	private long startTime = 0;
+	private final Configuration config = Play.application().configuration();
 	
 	public HealthCheckActor(Set<Class<? extends HealthCheck>> checks) {
 		this.checks = checks;
@@ -30,35 +32,22 @@ class HealthCheckActor extends UntypedActor {
 	@Override
 	public void onReceive(Object msg) throws Exception {
 		if(msg instanceof HealthCheckTimedRequest) {
-			for(Class<? extends HealthCheck> check : checks) {
-				Props props = Props.create(Worker.class);
-				ActorRef worker = getContext().actorOf(props);
-				HealthCheck healthCheck = HealthChecker.getInjector().getInstance(Key.get(HealthCheck.class, Names.named("PlayGuiceStatsD-HealthCheck-" + check.getName())));
-				HealthCheckRequest request = new HealthCheckRequest(healthCheck);
-				worker.tell(request, getSelf());
-			}
-			startTimer();
+			sender = null;
+			startCheck();
 		}
 		
 		if(msg instanceof HealthChecksRequest) {
-			responses.clear();
 			sender = getSender();
-			for(Class<? extends HealthCheck> check : checks) {
-				Props props = Props.create(Worker.class);
-				ActorRef worker = getContext().actorOf(props);
-				HealthCheck healthCheck = HealthChecker.getInjector().getInstance(Key.get(HealthCheck.class, Names.named("PlayGuiceStatsD-HealthCheck-" + check.getName())));
-				HealthCheckRequest request = new HealthCheckRequest(healthCheck);
-				responses.put(check, new HealthCheckHolder(healthCheck));
-				worker.tell(request, getSelf());
-			}
-			startTimer();
+			startCheck();
 		}
 		
 		if(msg instanceof HealthCheckResponse) {
 			if (responses.isEmpty()) return;
 			HealthCheckResponse response = (HealthCheckResponse) msg;
 			responses.get(response.getHealthCheckClass()).setResult(response.getResult());
-			if(isFull(responses)) {
+			if(response.getResult().isHealthy()) Logger.info(response.getResult().toString());
+			else Logger.error(response.getResult().toString());
+			if(sender != null && isFull(responses)) {
 				HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(responses));
 				sender.tell(healthCheckResponses, sender);
 				responses.clear();
@@ -69,7 +58,9 @@ class HealthCheckActor extends UntypedActor {
 			if (responses.isEmpty()) return;
 			for(HealthCheckHolder holder : responses.values()) {
 				if(holder.getResult() == null) {
-					holder.setResult(holder.getHealthCheck().timeout(5000));
+					Result result = holder.getHealthCheck().timeout(config.getMilliseconds("statsd.healthchecks.timeout"));
+					Logger.error(result.toString());
+					holder.setResult(result);
 				}
 			}
 			HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(responses));
@@ -77,11 +68,25 @@ class HealthCheckActor extends UntypedActor {
 			responses.clear();
 		}
 	}
+
+	private void startCheck() {
+		responses.clear();
+		for(Class<? extends HealthCheck> check : checks) {
+			Props props = Props.create(Worker.class);
+			ActorRef worker = getContext().actorOf(props);
+			HealthCheck healthCheck = HealthChecker.getInjector().getInstance(Key.get(HealthCheck.class, Names.named("PlayGuiceStatsD-HealthCheck-" + check.getName())));
+			HealthCheckRequest request = new HealthCheckRequest(healthCheck);
+			responses.put(check, new HealthCheckHolder(healthCheck, worker));
+			worker.tell(request, getSelf());
+		}
+		startTimer();
+	}
 	
 	private void startTimer() {
-		startTime = System.currentTimeMillis();
+		if(config.getString("statsd.healthchecks.timeout") == null) return;
+		long interval = config.getMilliseconds("statsd.healthchecks.timeout");
 		Akka.system().scheduler().scheduleOnce( 
-			Duration.apply(5000, TimeUnit.MILLISECONDS),
+			Duration.apply(interval, TimeUnit.MILLISECONDS),
 			getSelf(),
 			new HealthCheckTimeoutRequest(),
 			Akka.system().dispatcher(),
@@ -113,13 +118,8 @@ class HealthCheckActor extends UntypedActor {
         	HealthCheckRequest request = (HealthCheckRequest) message;
         	HealthCheck healthCheck = request.getCheck();
 			Result result = healthCheck.execute();
-			if(message instanceof String) {
-				if(result.isHealthy()) Logger.info(result.toString());
-				else Logger.error(result.toString());
-			} else {
-				HealthCheckResponse response = new HealthCheckResponse(result, healthCheck.getClass());
-				getSender().tell(response, getSelf());
-			}
+			HealthCheckResponse response = new HealthCheckResponse(result, healthCheck.getClass());
+			getSender().tell(response, getSelf());
 			getContext().stop(getSelf());
         }
 	} 
