@@ -1,9 +1,11 @@
 package playGuiceStatsD.healthChecks;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import play.Configuration;
@@ -20,90 +22,100 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 
 class HealthCheckActor extends UntypedActor {
-	private ActorRef sender;
+	//private ActorRef sender;
 	private final Set<Class<? extends HealthCheck>> checks;
-	private final Map<Class<? extends HealthCheck>, HealthCheckHolder> responses = new HashMap<Class<? extends HealthCheck>, HealthCheckHolder>();
+	//private final Map<Class<? extends HealthCheck>, HealthCheckHolder> responses = new HashMap<Class<? extends HealthCheck>, HealthCheckHolder>();
+	private final Map<UUID, HealthCheckSession> sessions = new HashMap<UUID, HealthCheckSession>();
 	private final Configuration config = Play.application().configuration();
+	private final boolean useTimeout = config.getString("statsd.healthchecks.timeout") != null;
+	private final long timeout;
 	
 	public HealthCheckActor(Set<Class<? extends HealthCheck>> checks) {
 		this.checks = checks;
+		if(useTimeout) timeout = config.getMilliseconds("statsd.healthchecks.timeout");
+		else timeout = 0;
 	}
 	
 	@Override
 	public void onReceive(Object msg) throws Exception {
 		if(msg instanceof HealthCheckTimedRequest) {
-			sender = null;
-			startCheck();
+			UUID key = UUID.randomUUID();
+			HealthCheckSession session = new HealthCheckSession(key);
+			sessions.put(key, session);
+			startCheck(session);
 		}
 		
 		if(msg instanceof HealthChecksRequest) {
-			sender = getSender();
-			startCheck();
+			UUID key = UUID.randomUUID();
+			HealthCheckSession session = new HealthCheckSession(key, getSender());
+			sessions.put(key, session);
+			startCheck(session);
 		}
 		
 		if(msg instanceof HealthCheckResponse) {
-			if (responses.isEmpty()) return;
 			HealthCheckResponse response = (HealthCheckResponse) msg;
-			responses.get(response.getHealthCheckClass()).setResult(response.getResult());
+			if (!sessions.containsKey(response.getKey())) return;
+			sessions.get(response.getKey()).getHolder(response.getHealthCheckClass()).setResult(response.getResult());
 			if(response.getResult().isHealthy()) Logger.info(response.getResult().toString());
 			else Logger.error(response.getResult().toString());
-			if(sender != null && isFull(responses)) {
-				HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(responses));
+			ActorRef sender = sessions.get(response.getKey()).getSender();
+			if(sender != null && isFull(sessions.get(response.getKey()).getHolders())) {
+				HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(sessions.get(response.getKey()).getHolders()));
 				sender.tell(healthCheckResponses, sender);
-				responses.clear();
+				sessions.remove(response.getKey());
 			};
 		}
 		
 		if(msg instanceof HealthCheckTimeoutRequest) {
-			if (responses.isEmpty()) return;
-			for(HealthCheckHolder holder : responses.values()) {
+			HealthCheckTimeoutRequest request = (HealthCheckTimeoutRequest) msg;
+			if (!sessions.containsKey(request.getKey())) return;
+			for(HealthCheckHolder holder : sessions.get(request.getKey()).getHolders()) {
 				if(holder.getResult() == null) {
-					Result result = holder.getHealthCheck().timeout(config.getMilliseconds("statsd.healthchecks.timeout"));
+					Result result = holder.getHealthCheck().timeout(timeout);
 					Logger.error(result.toString());
 					holder.setResult(result);
 				}
 			}
-			HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(responses));
-			sender.tell(healthCheckResponses, sender);
-			responses.clear();
+			HealthCheckResponses healthCheckResponses = new HealthCheckResponses(getResultSet(sessions.get(request.getKey()).getHolders()));
+			ActorRef sender = sessions.get(request.getKey()).getSender();
+			if(sender != null) sender.tell(healthCheckResponses, sender);
+			sessions.remove(request.getKey());
 		}
 	}
 
-	private void startCheck() {
-		responses.clear();
+	private void startCheck(HealthCheckSession session) {
 		for(Class<? extends HealthCheck> check : checks) {
 			Props props = Props.create(Worker.class);
 			ActorRef worker = getContext().actorOf(props);
 			HealthCheck healthCheck = HealthChecker.getInjector().getInstance(Key.get(HealthCheck.class, Names.named("PlayGuiceStatsD-HealthCheck-" + check.getName())));
-			HealthCheckRequest request = new HealthCheckRequest(healthCheck);
-			responses.put(check, new HealthCheckHolder(healthCheck, worker));
+			HealthCheckRequest request = new HealthCheckRequest(session.getKey(), healthCheck);
+			session.addHolder(check, new HealthCheckHolder(healthCheck, worker));
 			worker.tell(request, getSelf());
 		}
-		startTimer();
+		startTimer(session);
 	}
 	
-	private void startTimer() {
-		if(config.getString("statsd.healthchecks.timeout") == null) return;
-		long interval = config.getMilliseconds("statsd.healthchecks.timeout");
+	private void startTimer(HealthCheckSession session) {
+		if(!useTimeout) return;
 		Akka.system().scheduler().scheduleOnce( 
-			Duration.apply(interval, TimeUnit.MILLISECONDS),
+			Duration.apply(timeout, TimeUnit.MILLISECONDS),
 			getSelf(),
-			new HealthCheckTimeoutRequest(),
+			new HealthCheckTimeoutRequest(session.getKey()),
 			Akka.system().dispatcher(),
 			getSelf());
 	}
 	
-	private Set<Result> getResultSet(Map<Class<? extends HealthCheck>, HealthCheckHolder> responses) {
+	private Set<Result> getResultSet(Collection<HealthCheckHolder> holders) {
 		Set<Result> resultSet = new HashSet<Result>();
-		for(HealthCheckHolder holder : responses.values()) {
+		for(HealthCheckHolder holder : holders) {
 			resultSet.add(holder.getResult());
 		}
 		return resultSet;
 	}
 	
-	private boolean isFull(Map<Class<? extends HealthCheck>, HealthCheckHolder> responses) {
+	private boolean isFull(Collection<HealthCheckHolder> holders) {
 		boolean isFull = true;
-		for(HealthCheckHolder holder : responses.values()) {
+		for(HealthCheckHolder holder : holders) {
 			if(holder.getResult() == null) {
 				isFull = false;
 				break;
@@ -118,7 +130,7 @@ class HealthCheckActor extends UntypedActor {
         	HealthCheckRequest request = (HealthCheckRequest) message;
         	HealthCheck healthCheck = request.getCheck();
 			Result result = healthCheck.execute();
-			HealthCheckResponse response = new HealthCheckResponse(result, healthCheck.getClass());
+			HealthCheckResponse response = new HealthCheckResponse(request.getKey(), result, healthCheck.getClass());
 			getSender().tell(response, getSelf());
 			getContext().stop(getSelf());
         }
