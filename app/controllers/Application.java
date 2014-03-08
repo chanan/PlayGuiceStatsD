@@ -23,7 +23,7 @@ public class Application extends Controller {
     public Result index() {
     	sayHello.Speak();
     	actor.tell("tick", null);
-        return ok(index.render("Your new application is ready."));
+        return ok(index.render());
     }
     
     public Result causeError() {

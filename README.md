@@ -19,7 +19,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 Add to your libraryDependencies:
 
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.4.0"
+"playguicestatsd" %% "playguicestatsd" % "0.5.0"
 ```
 
 Usage
@@ -70,6 +70,22 @@ another schedule you can also supply:
 * statsd.healthchecks.initialDelay = 1 minute
 * statsd.healthchecks.interval = 5 minutes
 
+### HealthCheck Timeouts
+
+You can choose to consider a healthcheck that takes too long as failed. If you don't supply "statsd.healthchecks.timeout" in the application.conf then this feature will be turned off. Otherwise
+a healthcheck that takes longer than the supplied value will be considered as failed. You can see this in the sample app in the HealthCheckRandomTime check that sometimes takes 500ms and sometimes
+takes 10,000ms. 
+
+### HealthCheck Webpage
+
+playGuiceStatsD comes with a page that displays the healthchecks. To use it add the following line to your routes file:
+
+```
+->     /         					playGuiceStatsD.Routes
+```
+
+This will enable the healthcheck page on the /healthcheck route.
+
 Integrations with AkkaGuice
 --------------------
 
@@ -101,5 +117,6 @@ public class Global extends GlobalSettings {
 History
 -------
 
+* 0.5.0 - Added a healthcheck page and timeouts for healthchecks
 * 0.4.0 - Added grouping by server ip
 
