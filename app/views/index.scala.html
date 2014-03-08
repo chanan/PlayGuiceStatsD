@@ -1,5 +1,3 @@
-@(message: String)
-
 @main("PlayGuiceStatsD") {
 
 <h1>PlayGuiceStatsD</h1>
@@ -20,7 +18,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 
 <p>Add to your libraryDependencies:
 <code><pre>
-"playguicestatsd" %% "playguicestatsd" % "0.4.0"
+"playguicestatsd" %% "playguicestatsd" % "0.5.0"
 </pre></code></p>
 
 <h2>Usage</h2>
@@ -73,7 +71,24 @@ another schedule you can also supply:</p>
 <li>statsd.healthchecks.interval = 5 minutes</li>
 </ul>
 
-<h3>Integrations with AkkaGuice</h3>
+<h3>HealthCheck Timeouts</h3>
+
+<p>You can choose to consider a healthcheck that takes too long as failed. If you don't supply "statsd.healthchecks.timeout" in the application.conf then this feature will be turned off. Otherwise
+a healthcheck that takes longer than the supplied value will be considered as failed. You can see this in the sample app in the HealthCheckRandomTime check that sometimes takes 500ms and sometimes
+takes 10,000ms.</p>
+
+<h3>HealthCheck Webpage</h3>
+
+<p>playGuiceStatsD comes with a page that displays the healthchecks. To use it add the following line to your routes file:</p>
+
+<p>
+<code><pre>
+->     /         					playGuiceStatsD.Routes
+</pre></code></p>
+
+<p>This will enable the healthcheck page on the /healthcheck route.</p>
+
+<h2>Integrations with AkkaGuice</h2>
 
 <p>AkkaGuice can be used safely with PlayGuiceStatsD:</p>
 
@@ -104,6 +119,7 @@ public class Global extends GlobalSettings {
 <h2>History</h2>
 
 <ul>
+	<li>0.5.0 - Added a healthcheck page and timeouts for healthchecks</li>
 	<li>0.4.0 - Added grouping by server ip</li>
 </ul>
 

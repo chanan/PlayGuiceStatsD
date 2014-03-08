@@ -83,26 +83,33 @@ public abstract class HealthCheck {
         }
         
         static Result setName(Result result, String name) {
-			return new Result(result.healthy, result.getMessage(), result.getError(), name);
+			return new Result(result.healthy, result.getMessage(), result.getError(), name, result.getTime());
         }
+        
+        public static Result setTime(Result result, long time) {
+        	return new Result(result.healthy, result.getMessage(), result.getError(), result.getName(), time);
+		}
 
         private final boolean healthy;
         private final String message;
         private final Throwable error;
         private final String name;
+        private final long time;
         
         private Result(boolean isHealthy, String message, Throwable error) {
             this.healthy = isHealthy;
             this.message = message;
             this.error = error;
             this.name = null;
+            this.time = 0;
         }
         
-        private Result(boolean isHealthy, String message, Throwable error, String name) {
+        private Result(boolean isHealthy, String message, Throwable error, String name, long time) {
             this.healthy = isHealthy;
             this.message = message;
             this.error = error;
             this.name = name;
+            this.time = time;
         } 
         
         /**
@@ -137,6 +144,10 @@ public abstract class HealthCheck {
         public String getName() {
         	return name;
         }
+        
+        public long getTime() {
+        	return time;
+        }
 
         @Override
         public String toString() {
@@ -154,6 +165,7 @@ public abstract class HealthCheck {
             if (error != null) {
                 builder.append(", error=").append(error);
             }
+            builder.append(", time=").append(time);
             builder.append('}');
             return builder.toString();
         }
@@ -221,6 +233,7 @@ public abstract class HealthCheck {
         }
         final long time = System.currentTimeMillis() - start;
     	check = Result.setName(check, name);
+    	check = Result.setTime(check, time);
     	Statsd.timing(statName, time);
     	Statsd.increment(statName);
 		if(error) {
@@ -228,6 +241,16 @@ public abstract class HealthCheck {
 			Statsd.increment("healthchecks.errors");
 		}
         return check;
+    }
+    
+    Result timeout(long timeout) {
+    	final String name = getClassName(this.getClass().getSimpleName());
+    	final String statName = "healthchecks." + name + ".timeout";
+    	Statsd.increment(statName);
+    	Statsd.increment("healthchecks.timeout");
+    	Result check = Result.unhealthy("Timeout expired!");
+    	check = Result.setName(check, name);
+    	return Result.setTime(check, timeout);
     }
 
     private String getClassName(String name) {

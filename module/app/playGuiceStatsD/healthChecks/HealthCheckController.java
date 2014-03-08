@@ -23,7 +23,7 @@ public class HealthCheckController extends Controller {
 	}
 	
 	public Promise<Result> healthcheck() {
-		return Promise.wrap(ask(healthCheckActor, new HealthChecksRequest(), 10000)).map(
+		return Promise.wrap(ask(healthCheckActor, new HealthChecksRequest(), 60000)).map(
 			new Function<Object, Result>() {
 				public Result apply(Object response) {
 					HealthCheckResponses responses = (HealthCheckResponses) response;

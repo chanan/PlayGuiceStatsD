@@ -1,13 +1,20 @@
 package playGuiceStatsD.healthChecks;
+import java.util.UUID;
 
 class HealthCheckRequest {
-	private Class<? extends HealthCheck> check;
+	private final HealthCheck healthCheck;
+	private final UUID key;
 
-	HealthCheckRequest(Class<? extends HealthCheck> check) {
-		this.check = check;
+	HealthCheckRequest(UUID key, HealthCheck healthCheck) {
+		this.key = key;
+		this.healthCheck = healthCheck;
 	}
 	
-	Class<? extends HealthCheck> getCheck() {
-		return check;
+	HealthCheck getCheck() {
+		return healthCheck;
+	}
+	
+	UUID getKey() {
+		return key;
 	}
 }
