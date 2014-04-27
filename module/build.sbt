@@ -1,6 +1,6 @@
 name := "PlayGuiceStatsD"
 
-version := "0.5.0"
+version := "0.5.1"
 
 libraryDependencies ++= Seq(
 	"com.typesafe.play.plugins" %% "play-statsd" % "2.2.0",

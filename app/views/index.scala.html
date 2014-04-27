@@ -13,12 +13,13 @@ registered in Guice. Also, the module provides a way to do health checks that in
 
 <p><code><pre>
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
+
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
 </pre></code></p>
 
 <p>Add to your libraryDependencies:
 <code><pre>
-"playguicestatsd" %% "playguicestatsd" % "0.5.0"
+"playguicestatsd" %% "playguicestatsd" % "0.5.1"
 </pre></code></p>
 
 <h2>Usage</h2>
@@ -119,6 +120,7 @@ public class Global extends GlobalSettings {
 <h2>History</h2>
 
 <ul>
+    <li>0.5.1 - Renamed global in module</li>
 	<li>0.5.0 - Added a healthcheck page and timeouts for healthchecks</li>
 	<li>0.4.0 - Added grouping by server ip</li>
 </ul>

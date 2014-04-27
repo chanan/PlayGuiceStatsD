@@ -13,13 +13,14 @@ Add the following to your build.sbt:
 
 ```java
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
+
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
 ```
 
 Add to your libraryDependencies:
 
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.5.0"
+"playguicestatsd" %% "playguicestatsd" % "0.5.1"
 ```
 
 Usage
@@ -117,6 +118,7 @@ public class Global extends GlobalSettings {
 History
 -------
 
+* 0.5.1 - Renamed global in module
 * 0.5.0 - Added a healthcheck page and timeouts for healthchecks
 * 0.4.0 - Added grouping by server ip
 

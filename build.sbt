@@ -13,3 +13,7 @@ play.Project.playJavaSettings
 lazy val module = project.in(file("module"))
 
 lazy val main = project.in(file(".")).dependsOn(module).aggregate(module)
+
+resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
+
+resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"

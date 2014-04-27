@@ -1,7 +1,7 @@
 import play.GlobalSettings;
 import playGuiceStatsD.healthChecks.HealthChecker;
 
-public class Global extends GlobalSettings {
+public class StatsGlobal extends GlobalSettings {
 
 	@Override
 	public <A> A getControllerInstance(Class<A> clazz) throws Exception {
