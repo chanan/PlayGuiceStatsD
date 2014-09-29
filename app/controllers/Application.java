@@ -17,10 +17,11 @@ public class Application extends Controller {
 	public Application(SayHello sayHello, @Named("HelloActor") ActorRef actor) {
 		this.sayHello = sayHello;
 		this.actor = actor;
-		Logger.debug("SayHello from Controller: " + sayHello.toString());
+		Logger.debug("SayHello from constructor: " + sayHello.toString());
 	}
 	
     public Result index() {
+        Logger.debug("SayHello from action (on next line)");
     	sayHello.Speak();
     	actor.tell("tick", null);
         return ok(index.render());

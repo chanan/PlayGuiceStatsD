@@ -20,7 +20,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 Add to your libraryDependencies:
 
 ```java
-"playguicestatsd" %% "playguicestatsd" % "0.5.1"
+"playguicestatsd" %% "playguicestatsd" % "0.6.0"
 ```
 
 Usage
@@ -118,6 +118,7 @@ public class Global extends GlobalSettings {
 History
 -------
 
+* 0.6.0 - Support for Play 2.3
 * 0.5.1 - Renamed global in module
 * 0.5.0 - Added a healthcheck page and timeouts for healthchecks
 * 0.4.0 - Added grouping by server ip

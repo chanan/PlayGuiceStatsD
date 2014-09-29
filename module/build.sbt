@@ -1,9 +1,9 @@
 name := "PlayGuiceStatsD"
 
-version := "0.5.1"
+version := "0.6.0"
 
 libraryDependencies ++= Seq(
-	"com.typesafe.play.plugins" %% "play-statsd" % "2.2.0",
+	"com.typesafe.play.plugins" %% "play-statsd" % "2.3.0",
 	"com.google.inject" % "guice" % "3.0",
 	"org.reflections" % "reflections" % "0.9.9-RC1"
 )
@@ -17,6 +17,8 @@ publishTo <<= version { (v: String) =>
 
 publishArtifact in(Compile, packageDoc) := false
 
-publishMavenStyle := true 
+publishMavenStyle := true
 
-play.Project.playJavaSettings
+scalaVersion := "2.11.1"
+
+lazy val main = project.in(file(".")).enablePlugins(PlayJava)
